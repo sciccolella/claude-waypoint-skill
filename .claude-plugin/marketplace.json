@@ -1,0 +1,21 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "waypoint",
+  "description": "Marketplace for the waypoint plugin: checkpoint a long session's state to a doc and resume it cleanly in a fresh session.",
+  "owner": {
+    "name": "Simone Ciccolella",
+    "email": "simone.ciccolella@unimib.it"
+  },
+  "plugins": [
+    {
+      "name": "waypoint",
+      "description": "Write the current session's state to a waypoint doc and produce a paste-in prompt to resume it in a fresh session, then auto-detect and resume from that doc later with /waypoint-continue.",
+      "author": {
+        "name": "Simone Ciccolella",
+        "email": "simone.ciccolella@unimib.it"
+      },
+      "category": "productivity",
+      "source": "./plugins/waypoint"
+    }
+  ]
+}

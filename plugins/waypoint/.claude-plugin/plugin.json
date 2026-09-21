@@ -1,0 +1,18 @@
+{
+  "name": "waypoint",
+  "version": "1.0.0",
+  "description": "Write the current session's state to a waypoint doc and produce a paste-in prompt to resume it in a fresh session, then auto-detect and resume from that doc later with /waypoint-continue.",
+  "author": {
+    "name": "Simone Ciccolella",
+    "email": "simone.ciccolella@unimib.it"
+  },
+  "license": "MIT",
+  "keywords": [
+    "session",
+    "handoff",
+    "checkpoint",
+    "context",
+    "long-running",
+    "productivity"
+  ]
+}
