@@ -19,13 +19,15 @@ finally gets too slow), `/waypoint` writes a structured handoff doc and a paste-
 
 Two skills, no scripts or hooks — pure prompt-driven workflow:
 
-- **`waypoint`** — writes the current session's state (what's done, what's pending, files
-  touched, background pipelines, constraints not yet written down anywhere durable) to a
+- **`waypoint`** (or `/wp`) — writes the current session's state (what's done, what's pending,
+  files touched, background pipelines, constraints not yet written down anywhere durable) to a
   uniquely-named doc in `~/.claude/waypoints/`, then prints the exact prompt to paste into a
   new session and recommends ending this one.
-- **`waypoint-continue`** — in a fresh session, auto-detects the right waypoint doc for the
-  current directory (no path argument needed), reads it plus whatever plan it points at,
+- **`waypoint-continue`** (or `/wpc`) — in a fresh session, auto-detects the right waypoint doc
+  for the current directory (no path argument needed), reads it plus whatever plan it points at,
   resumes directly from "Next steps", and cleans up the doc once the resume has succeeded.
+
+`/wp` and `/wpc` are plain aliases — they just forward to the skills above, nothing more.
 
 Waypoint docs live in `~/.claude/waypoints/`, not the project directory — they're disposable
 orchestration state, not project output, and are never committed to a project's own repo.
