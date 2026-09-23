@@ -46,9 +46,10 @@ outside the project tree, uniquely named, disposable.
   user said this session that aren't yet written down anywhere durable (not already in
   CLAUDE.md or memory), scope boundaries ("don't touch chain.c"), model assignments per
   remaining task, anything explicitly not-yet-approved (e.g. "report back before committing").
-- The absolute path of the project directory this session is working in (`pwd` / the cwd from
-  the environment block) — needed for the doc's identity header and for `/waypoint-continue` to
-  find it later.
+- The canonical absolute path of the project directory this session is working in (`pwd -P`,
+  i.e. with symlinks resolved) and its path hash (see step 2) — needed for the doc's filename
+  and identity header, and for `/waypoint-continue` to find it later. The basename alone is not
+  enough: different projects can share a folder name.
 
 ## 2. Write the waypoint doc
 
@@ -60,23 +61,33 @@ alongside Claude Code's own config/hooks, not project output.
 project coexist cleanly:
 
 ```
-<project-slug>_<YYYYMMDD-HHMMSS>.md
+<project-slug>-<path-hash>_<YYYYMMDD-HHMMSS>.md
 ```
 
 - `<project-slug>`: the project directory's basename, lowercased, non-alphanumerics replaced
-  with `-` (e.g. `/home/ciccolella/checkpoint-skill` → `checkpoint-skill`).
+  with `-` (e.g. `/home/ciccolella/checkpoint-skill` → `checkpoint-skill`). Human-readable
+  only — never treat it as an identifier, since two projects in different places can share a
+  basename (`~/work/pipeline` and `/data/proj/pipeline`).
+- `<path-hash>`: first 8 hex chars of the SHA-256 of the project's canonical absolute path
+  (symlinks resolved, no trailing slash). This is what disambiguates same-named directories.
+  Compute it with exactly this command, run from the project directory, so
+  `/waypoint-continue` reproduces the same value:
+
+  ```bash
+  printf '%s' "$(pwd -P)" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-8
+  ```
 - `<YYYYMMDD-HHMMSS>`: this session's local timestamp — doubles as a uniqueness guarantee (two
   waypoints in the same project in the same second are not a real scenario) and lets the user
   eyeball recency without opening the file.
 
-Example: `~/.claude/waypoints/checkpoint-skill_20260921-181600.md`.
+Example: `~/.claude/waypoints/checkpoint-skill-3f9a1c2e_20260921-181600.md`.
 
 **Content structure** — start with an identity header the `waypoint-continue` skill relies on
 to match a waypoint back to the right project, then the same content shape as before:
 
 ```markdown
 ---
-project_dir: <absolute path to the project directory>
+project_dir: <canonical absolute path — output of `pwd -P`, the same string that was hashed>
 created: <ISO 8601 timestamp>
 ---
 

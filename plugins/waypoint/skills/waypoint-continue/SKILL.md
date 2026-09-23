@@ -20,11 +20,28 @@ The default path is zero-argument: `/waypoint-continue` alone should just work.
 - If the user gave an explicit path or filename (as `/waypoint-continue <path>` args, or
   named it in their message), use that instead of auto-detecting — an explicit pointer always
   wins.
-- Otherwise, list `~/.claude/waypoints/*.md`, read each one's `project_dir:` header, and filter
-  to the ones matching the current working directory (exact match on the absolute path).
+- Otherwise, match on the **full canonical path**, never on the folder name. The filename's
+  leading slug is just the basename and can be shared by unrelated projects in different
+  places (`~/work/pipeline` vs `/data/proj/pipeline`) — a waypoint whose filename starts with
+  this directory's name is *not* evidence it belongs here.
+  1. Compute this directory's canonical path and path hash, with the same command `/waypoint`
+     uses:
+
+     ```bash
+     pwd -P
+     printf '%s' "$(pwd -P)" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-8
+     ```
+  2. Candidates are `~/.claude/waypoints/*-<hash>_*.md`, plus any legacy waypoints written
+     before the hash was added (filename is `<slug>_<timestamp>.md`, no `-<8 hex>` before the
+     underscore).
+  3. For every candidate, read its `project_dir:` header and keep only those equal to the
+     canonical path from (1) (ignore a trailing slash; also accept a header equal to the
+     logical `$PWD`, since legacy waypoints may have recorded the unresolved path). The header
+     is authoritative — the hash only narrows the search. Discard anything that doesn't match,
+     even if the slug or hash looks right.
   - **Exactly one match**: use it, no confirmation needed — say which file was picked (filename
-    is enough, e.g. "resuming from `checkpoint-skill_20260921-181600.md`") as part of the normal
-    step-3 summary, not as a question.
+    is enough, e.g. "resuming from `checkpoint-skill-3f9a1c2e_20260921-181600.md`") as part of
+    the normal step-3 summary, not as a question.
   - **Multiple matches**: pick the most recent one by the timestamp encoded in the filename and
     proceed the same way, but explicitly name it and mention the others exist (e.g. "resuming
     from the most recent waypoint for this directory (`..._181600.md`); N older ones for this
@@ -32,7 +49,9 @@ The default path is zero-argument: `/waypoint-continue` alone should just work.
     meant — this is a heads-up, not a blocking question.
   - **No matches for this cwd**: only then fall back to asking — list the most recent few
     waypoints regardless of project (the user may be resuming into a moved/renamed directory)
-    and ask which one, since there's no signal left to auto-resolve on.
+    and ask which one, since there's no signal left to auto-resolve on. Show each one's
+    `project_dir:` next to its filename — same-named projects are indistinguishable by
+    filename alone. Never auto-pick one just because its slug equals this directory's name.
 
 ## 2. Read, in order
 
@@ -78,8 +97,10 @@ content into the project or otherwise promote it to a tracked artifact.
   - Exception: if step 2 flagged a real mismatch (working tree doesn't match the doc, doc looked
     stale/thin) and you asked the user how to proceed instead of resuming cleanly, don't delete —
     leave it until the situation is actually resolved.
-- At the same time, sweep any *other* waypoints whose `project_dir:` matches this project and
-  that are older than the one you just used — they're superseded (a newer waypoint for the same
+- At the same time, sweep any *other* waypoints whose `project_dir:` header matches this
+  project's canonical path (the same header check as step 1 — never select by filename slug,
+  or you'll delete a same-named project's waypoint) and that are older than the one you just
+  used — they're superseded (a newer waypoint for the same
   project means the older one's "Next steps" are either done or subsumed). List what you're
   removing in the same aside rather than deleting silently. Leave waypoints for *other* projects
   untouched — this skill only ever cleans up after itself for the project it was just invoked in.

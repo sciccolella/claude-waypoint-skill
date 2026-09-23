@@ -21,7 +21,8 @@ Two skills, no scripts or hooks — pure prompt-driven workflow:
 
 - **`waypoint`** (or `/wp`) — writes the current session's state (what's done, what's pending,
   files touched, background pipelines, constraints not yet written down anywhere durable) to a
-  uniquely-named doc in `~/.claude/waypoints/`, then prints the exact prompt to paste into a
+  uniquely-named doc in `~/.claude/waypoints/` (named by folder plus a hash of its full path, so
+  same-named folders in different places never collide), then prints the exact prompt to paste into a
   new session and recommends ending this one.
 - **`waypoint-continue`** (or `/wpc`) — in a fresh session, auto-detects the right waypoint doc
   for the current directory (no path argument needed), reads it plus whatever plan it points at,
